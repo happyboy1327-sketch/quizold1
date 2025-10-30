@@ -7,15 +7,47 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>오늘의 랜덤 인물 퀴즈</h1>
-    <button id="reload-btn">새 문제 불러오기</button>
-  </header>
+  <h1>인물 퀴즈</h1>
+  <div id="quiz-container"></div>
 
-  <main>
-    <div id="quiz-container"></div>
-  </main>
+  <script>
+    async function fetchQuiz() {
+      try {
+        const res = await fetch("/api/quiz/today");
+        if (!res.ok) throw new Error("API 실패: " + res.status);
+        const data = await res.json();
+        return data;
+      } catch (err) {
+        console.error("🚨 API 오류:", err);
+        return [];
+      }
+    }
 
-  <script src="script.js"></script>
+    async function displayQuiz() {
+      const container = document.getElementById("quiz-container");
+      container.innerHTML = "<p>로딩 중...</p>";
+      const quizzes = await fetchQuiz();
+
+      if (quizzes.length === 0) {
+        container.innerHTML = "<p>퀴즈를 불러오지 못했습니다.</p>";
+        return;
+      }
+
+      container.innerHTML = "";
+      quizzes.forEach((q, idx) => {
+        const div = document.createElement("div");
+        div.className = "quiz-item";
+        div.innerHTML = `
+          <h3>문제 ${idx + 1}: ${q.name}</h3>
+          <p>힌트: ${q.hint}</p>
+          <img src="${q.image}" alt="${q.name}">
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    document.getElementById("reload-btn").addEventListener("click", displayQuiz);
+    window.addEventListener("DOMContentLoaded", displayQuiz);
+  </script>
 </body>
 </html>
